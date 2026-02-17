@@ -23,7 +23,6 @@
 #define OFFSET_CMAPDOC_MPWORLD 0x166 * 8
 
 #define CMAPATOM_VTABLE_DOTRANSFORM 17
-#define ADDR_RED_TINT_PATCH          ((int *)0x180C43D50)
 
 /* CMapEntity / FindEntity offsets */
 #define OFFSET_ENT_POS               0x50
@@ -121,39 +120,6 @@ int hook_SetPaneText(void *this_, int nIndex, char *lpszNewText, int bUpdate) {
 
 out:
     return orig_SetPaneText(this_, nIndex, lpszNewText, bUpdate);
-}
-
-static BOOL patch_selected_red_tint(uint8_t *base, size_t size) {
-    // uint8_t sig[] = {
-    //     0x89, 0x01,
-    //     0xC6, 0x41, 0x03, 0x40,
-    // };
-
-    // const char *mask = "xxxxxx";
-
-    // void *addr = find_pattern(
-    //     base,
-    //     size,
-    //     sig,
-    //     mask
-    // );
-
-    // if (!addr) {
-    //     log_msg("[hook] red tint not found\n");
-    //     return;
-    // }
-
-    //DWORD old;
-    //VirtualProtect(addr+5, 1, PAGE_EXECUTE_READWRITE, &old);
-    //*(((uint8_t*)addr)+5) = 0;
-
-    // FIND: .text:00000001802079C7	CMapFace::ComputeColor	mov     word ptr [rax+2], 4064h
-    // then use the dword below in the  else if ( a4 == 1 || a3 )
-    /* *ADDR_RED_TINT_PATCH = 0; */
-
-    log_msg("[hook] red tint patched\n");
-
-    return TRUE;
 }
 
 static BOOL find_cmapentity_type(uint8_t *base, size_t size) {
@@ -482,8 +448,6 @@ static const init_step_t init_steps[] = {
     find_updateallviews,
     find_setmodifiedflag,
 
-    patch_selected_red_tint,
-
     hook_set_pane_text,
     hook_set_active_map_doc,
 };
@@ -520,7 +484,7 @@ static DWORD WINAPI hook_init_thread(LPVOID param) {
 
     if (MH_EnableHook(MH_ALL_HOOKS) != MH_OK) {
         log_msg("[hook] MH_EnableHook failed\n");
-        return FALSE;
+        return 0;
     }
 
     log_msg("[hook] setup successfully\n");
